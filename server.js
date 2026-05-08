@@ -18,12 +18,14 @@ app.get("/", (req, res) => {
 });
 
 io.on("connection", (socket) => {
+  console.log("User connected:", socket.id);
 
-  console.log("User connected");
-
+  // JOIN SYSTEM
   socket.on("join", () => {
 
-    if (waitingUser) {
+    if (socket.partner) return;
+
+    if (waitingUser && waitingUser !== socket) {
       socket.partner = waitingUser;
       waitingUser.partner = socket;
 
@@ -34,18 +36,36 @@ io.on("connection", (socket) => {
     } else {
       waitingUser = socket;
     }
-
   });
 
+  // MESSAGE SYSTEM
   socket.on("message", (msg) => {
     if (socket.partner) {
       socket.partner.emit("message", msg);
     }
   });
 
+  // NEXT USER
   socket.on("next", () => {
+    if (socket.partner) {
+      socket.partner.emit("partner-left");
+      socket.partner.partner = null;
+    }
+
     socket.partner = null;
     waitingUser = socket;
+  });
+
+  // DISCONNECT
+  socket.on("disconnect", () => {
+    if (socket.partner) {
+      socket.partner.emit("partner-left");
+      socket.partner.partner = null;
+    }
+
+    if (waitingUser === socket) {
+      waitingUser = null;
+    }
   });
 
 });
