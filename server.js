@@ -5,6 +5,8 @@ const { Server } = require("socket.io");
 const app = express();
 const server = http.createServer(app);
 
+const PORT = process.env.PORT || 3000;
+
 const io = new Server(server, {
   cors: { origin: "*" }
 });
@@ -19,7 +21,6 @@ io.on("connection", (socket) => {
 
   console.log("User connected");
 
-  // JOIN CHAT
   socket.on("join", () => {
 
     if (waitingUser) {
@@ -33,25 +34,18 @@ io.on("connection", (socket) => {
     } else {
       waitingUser = socket;
     }
+
   });
 
-  // MESSAGE
   socket.on("message", (msg) => {
     if (socket.partner) {
       socket.partner.emit("message", msg);
     }
   });
 
-  // NEXT
   socket.on("next", () => {
     socket.partner = null;
     waitingUser = socket;
-  });
-
-  socket.on("disconnect", () => {
-    if (socket.partner) {
-      socket.partner.emit("partner-left");
-    }
   });
 
 });
