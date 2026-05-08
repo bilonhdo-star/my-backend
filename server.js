@@ -20,9 +20,10 @@ app.get("/", (req, res) => {
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
-  // JOIN SYSTEM
+  /* ======================
+      JOIN SYSTEM
+  ====================== */
   socket.on("join", () => {
-
     if (socket.partner) return;
 
     if (waitingUser && waitingUser !== socket) {
@@ -38,14 +39,27 @@ io.on("connection", (socket) => {
     }
   });
 
-  // MESSAGE SYSTEM
+  /* ======================
+      TEXT MESSAGE
+  ====================== */
   socket.on("message", (msg) => {
     if (socket.partner) {
       socket.partner.emit("message", msg);
     }
   });
 
-  // NEXT USER
+  /* ======================
+      AUDIO MESSAGE (FIX)
+  ====================== */
+  socket.on("audio", (data) => {
+    if (socket.partner) {
+      socket.partner.emit("audio", data);
+    }
+  });
+
+  /* ======================
+      NEXT USER
+  ====================== */
   socket.on("next", () => {
     if (socket.partner) {
       socket.partner.emit("partner-left");
@@ -56,7 +70,9 @@ io.on("connection", (socket) => {
     waitingUser = socket;
   });
 
-  // DISCONNECT
+  /* ======================
+      DISCONNECT CLEANUP
+  ====================== */
   socket.on("disconnect", () => {
     if (socket.partner) {
       socket.partner.emit("partner-left");
@@ -67,7 +83,6 @@ io.on("connection", (socket) => {
       waitingUser = null;
     }
   });
-
 });
 
 server.listen(PORT, () => {
